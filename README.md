@@ -18,5 +18,5 @@ This tool takes an Aperture library and creates Darktable compatible parallel di
 4. Execute the script
    ```pipenv run python3 -m aperture2darktable <library> <destination>```
 
-This will read the Aperture library <library> and create the directory with symlinks at <destination>.
+This will read the Aperture library <library> and create the directory with symlinks at `<destination>`.
 
