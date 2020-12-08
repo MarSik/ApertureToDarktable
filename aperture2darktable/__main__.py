@@ -34,7 +34,11 @@ def process_folder(f, d, path):
         dest = os.path.join(path, photo.filename)
         if os.path.exists(dest):
             os.unlink(dest)
-        os.symlink(os.path.join(args["<library>"], "Masters", photo.path),
+
+        abs_dest = os.path.join(args["<library>"], "Masters", photo.path)
+        start_path = os.path.dirname(dest)
+        link_dest = os.path.relpath(abs_dest, start=start_path)
+        os.symlink(link_dest,
                    dest)
 
         for idx, ver in enumerate(photo.versions):
