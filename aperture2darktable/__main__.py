@@ -15,6 +15,7 @@
 from docopt import docopt
 import os.path
 import pprint
+import unicodedata
 from . import library
 from . import xmp
 
@@ -68,6 +69,10 @@ def process_folder(f, d, path):
             os.unlink(dest)
 
         src = os.path.join(args["<library>"], "Masters", photo.path)
+
+        # At least on ext4 this was necessary when accessing data
+        # copied from HFS+
+        src = unicodedata.normalize("NFKC", src)
 
         try:
             link_method(src, dest)
