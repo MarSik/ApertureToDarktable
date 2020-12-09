@@ -19,11 +19,43 @@ from . import library
 from . import xmp
 
 DOC = """
-Usage: aperture2darktable <library> <dest>
+Usage: aperture2darktable [options] <library> <dest>
+
+Options:
+  --relative  Use relative symlinks (breaks when links are moved)
 """
 
 args = docopt(DOC)
 print(args)
+
+def try_hardlink(src, dest):
+    global link_method
+    try:
+        os.link(src, dest)
+    except Exception as e:
+        print(e)
+        link_method = try_symlink
+        link_method(src, dest)
+
+def try_symlink(src, dest):
+    global link_method
+    try:
+        if args["--relative"]:
+            start_path = os.path.dirname(dest)
+            src = os.path.relpath(src, start=start_path)
+        os.symlink(src, dest)
+    except Exception as e:
+        print(e)
+        link_method = try_none
+        link_method(src, dest)
+
+def try_none(src, dest):
+    pass
+
+if args["--relative"]:
+    link_method = try_symlink
+else:
+    link_method = try_hardlink
 
 def process_folder(f, d, path):
     print((d * 2 * " ") + "- " + f.name)
@@ -35,11 +67,12 @@ def process_folder(f, d, path):
         if os.path.exists(dest):
             os.unlink(dest)
 
-        abs_dest = os.path.join(args["<library>"], "Masters", photo.path)
-        start_path = os.path.dirname(dest)
-        link_dest = os.path.relpath(abs_dest, start=start_path)
-        os.symlink(link_dest,
-                   dest)
+        src = os.path.join(args["<library>"], "Masters", photo.path)
+
+        try:
+            link_method(src, dest)
+        except FileNotFoundError as e:
+            print(e)
 
         for idx, ver in enumerate(photo.versions):
             xmp_content = xmp.generate_xmp_rating(photo.filename, ver.rating)
