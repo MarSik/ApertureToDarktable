@@ -23,7 +23,10 @@ class ApertureDbBase(object):
         if db:
             self.db = db
         elif basedir:
-            self.db = sqlite3.connect(os.path.join(basedir, "Database", "Library.apdb"))
+            db_path = os.path.join(basedir, "Database", "apdb", "Library.apdb")
+            if not os.path.exists(db_path):
+                db_path = os.path.join(basedir, "Database", "Library.apdb")
+            self.db = sqlite3.connect(db_path)
 
         self.basedir = basedir
 
