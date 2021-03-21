@@ -14,9 +14,10 @@
 
 import sqlite3
 import os
+import plistlib
 import pprint
 
-from . import bplist
+from .adjustments import parse_adjustment
 
 class ApertureDbBase(object):
     def __init__(self, basedir=None, db=None):
@@ -53,18 +54,22 @@ class Version(ApertureDbBase):
 
     @property
     def content(self):
+        resolved = []
         try:
             with open(self.filename, "rb") as fl:
-                data = bplist.BPListReader(fl.read()).parse()
-                if b"RKImageAdjustments" in data:
-                    for adj in data[b"RKImageAdjustments"]:
-                        if b"data" in adj:
-                            adj[b"data"] = bplist.BPListReader(adj[b"data"]).parse()
-                return data
+                data = plistlib.load(fl)
+                if 'RKImageAdjustments' in data:
+                    for adj in data['RKImageAdjustments']:
+                        if 'data' in adj:
+                            adjustment_raw = plistlib.loads(adj['data'])
+                            adjustment = parse_adjustment(adjustment_raw)
+                            if adjustment.get('enabled', True):
+                                resolved.append(adjustment)
+                return resolved
 
         except FileNotFoundError as ex:
             print(ex)
-            return {}
+            return []
 
     @property
     def rating(self):
