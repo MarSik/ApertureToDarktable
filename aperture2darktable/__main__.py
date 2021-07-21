@@ -15,6 +15,7 @@
 from docopt import docopt
 import os.path
 import pprint
+import shutil
 import unicodedata
 from . import library
 from . import xmp
@@ -24,10 +25,18 @@ Usage: aperture2darktable [options] <library> <dest>
 
 Options:
   --relative  Use relative symlinks (breaks when links are moved)
+  --copy      Copy files
 """
 
 args = docopt(DOC)
 print(args)
+
+def try_copy(src, dest):
+    global link_method
+    try:
+        shutil.copyfile(src, dest)
+    except Exception as e:
+        print(e)
 
 def try_hardlink(src, dest):
     global link_method
@@ -35,7 +44,7 @@ def try_hardlink(src, dest):
         os.link(src, dest)
     except Exception as e:
         print(e)
-        link_method = try_symlink
+        link_method = try_copy
         link_method(src, dest)
 
 def try_symlink(src, dest):
@@ -53,7 +62,9 @@ def try_symlink(src, dest):
 def try_none(src, dest):
     pass
 
-if args["--relative"]:
+if args["--copy"]:
+    link_method = try_copy
+elif args["--relative"]:
     link_method = try_symlink
 else:
     link_method = try_hardlink
